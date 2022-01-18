@@ -4,6 +4,9 @@ public class BinaryTree<HuffNode> {
 HuffNode headHuffNode;
 BinaryTree left;
 BinaryTree right;
+int leftMark;
+int rightMark;
+
     public BinaryTree(HuffNode headHuffNode) {
         this.headHuffNode = headHuffNode;
     }
@@ -56,6 +59,23 @@ BinaryTree right;
 
 
 
+    public void setMarks() {
+        setMarksR(this);
+
+    }
+
+    private void setMarksR(BinaryTree<HuffNode> tree) {
+        if (tree.getLeftNode() != null) {
+            leftMark = 0;
+            setMarksR(tree.getLeftNode());
+        }
+
+        if (tree.getRightNode() != null) {
+            rightMark = 1;
+            setMarksR(tree.getRightNode());
+        }
+    }
+
 
 //
 //
@@ -73,20 +93,20 @@ BinaryTree right;
 //        }
 //    }
 //
-//    public void visitInOrder(Consumer<BinaryTree<HuffNode>> visitor) {
-//        visitInOrderR(this, visitor);
-//
-//    }
-//
-//    private void visitInOrderR(BinaryTree<HuffNode> tree, Consumer<BinaryTree<HuffNode>> visitor) {
-//        if (tree.getLeftNode() != null) {
-//            visitInOrderR(tree.getLeftNode(), visitor);
-//        }
-//        visitor.accept(tree);
-//        if (tree.getRightNode() != null) {
-//            visitInOrderR(tree.getRightNode(), visitor);
-//        }
-//    }
+    public void visitInOrder(Consumer<BinaryTree<HuffNode>> visitor) {
+        visitInOrderR(this, visitor);
+
+    }
+
+    private void visitInOrderR(BinaryTree<HuffNode> tree, Consumer<BinaryTree<HuffNode>> visitor) {
+        if (tree.getLeftNode() != null) {
+            visitInOrderR(tree.getLeftNode(), visitor);
+        }
+        visitor.accept(tree);
+        if (tree.getRightNode() != null) {
+            visitInOrderR(tree.getRightNode(), visitor);
+        }
+  }
 //
 //
 //

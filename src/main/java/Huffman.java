@@ -4,7 +4,8 @@ public class Huffman {
     static int charsCount;
     PriorityQueue<HuffNode> heap;
     HashMap<Byte, Integer> frequencyTable = new HashMap<>();
-    BinaryTree binaryTree;
+//    BinaryTree binaryTree;
+
 
     void calculateCharacterFrequencies(byte[] arrByte) {
         charsCount = arrByte.length;
@@ -27,7 +28,8 @@ public class Huffman {
         }
     }
 
-    BinaryTree buildHuffmanTree() {
+    public BinaryTree buildHuffmanTree() {
+        BinaryTree binaryTree;
         int sumFreq = 0;
         HuffNode min1 = heap.poll();
         BinaryTree<HuffNode> min1Tree = new BinaryTree<>(min1);
@@ -42,10 +44,10 @@ public class Huffman {
             HuffNode tempHead = new HuffNode(-1, sumFreq);
 //       heap.add(tempHead);
             BinaryTree tempBinaryTree = new BinaryTree(tempHead);
-            if (min1Tree.headHuffNode.frequency < min2Tree.headHuffNode.frequency){
+            if (min1Tree.headHuffNode.frequency < min2Tree.headHuffNode.frequency) {
                 tempBinaryTree.createLeftNode(min1);
                 tempBinaryTree.createRightNode(min2);
-            }else {
+            } else {
                 tempBinaryTree.createLeftNode(min2);
                 tempBinaryTree.createRightNode(min1);
             }
@@ -56,7 +58,69 @@ public class Huffman {
             System.out.println("min1Tree " + min1Tree.headHuffNode.frequency);
 //            System.out.println("min2Tree " + min2Tree.headHuffNode.frequency);
 
+
         }
+        binaryTree = min1Tree;
+
+        binaryTree.setMarks();
         return binaryTree;
     }
+
+    public Byte[] calculateCodeFromHuffmanTree(BinaryTree binaryTree, byte[] arrByte) {
+        Byte[] res = new Byte[arrByte.length];
+        for (int i = 0; i < arrByte.length; i++) {
+//            Byte co;
+//
+//            HuffNode left = (HuffNode) binaryTree.getLeftNode().getHuffNode();
+//            HuffNode right = (HuffNode) binaryTree.getRightNode().getHuffNode();
+             res = calculateCodeR(binaryTree, arrByte[i]);
+        }
+        return res;
+    }
+
+    public Byte[] calculateCodeR(BinaryTree visitedTree, Byte by) {
+        ArrayList<Byte> outputArrayList = new ArrayList<>();
+        Byte co;
+        if (!visitedTree.isLeaf()) {
+            HuffNode left = (HuffNode) visitedTree.getLeftNode().getHuffNode();
+            HuffNode right = (HuffNode) visitedTree.getRightNode().getHuffNode();
+            if (left.getCharacter() == by) {
+                co = 0;
+                outputArrayList.add(co);
+            } else if (right.getCharacter() == by) {
+                co = 1;
+                outputArrayList.add(co);
+            } else if (left.getCharacter() < 0) {
+                co = 0;
+                visitedTree = visitedTree.getLeftNode();
+                outputArrayList.add(co);
+            } else if (right.getCharacter() < 0) {
+                co = 1;
+                visitedTree = visitedTree.getRightNode();
+                outputArrayList.add(co);
+            }
+        }
+        return outputArrayList.toArray(new Byte[outputArrayList.size()]);
+    }
+
+    public Byte[] decode(BinaryTree<HuffNode> binaryTree, Byte[] arrByte) {
+        int element;
+        ArrayList<Integer> decodeArrayList = new ArrayList<>();
+        for (int i = 0; i < arrByte.length; i++) {
+            while (binaryTree.isLeaf()) {
+                if (binaryTree.getLeftNode().leftMark == arrByte[i]) {
+                    element = binaryTree.getLeftNode().getHuffNode().getCharacter();
+                    decodeArrayList.add(element);
+                    binaryTree = binaryTree.getLeftNode();
+                } else if (binaryTree.getRightNode().rightMark == arrByte[i]) {
+                    element = binaryTree.getRightNode().getHuffNode().getCharacter();
+                    decodeArrayList.add(element);
+                    binaryTree = binaryTree.getRightNode();
+                }
+            }
+        }
+        return decodeArrayList.toArray(new Byte[decodeArrayList.size()]);
+    }
+
+
 }
