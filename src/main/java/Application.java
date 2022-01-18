@@ -1,9 +1,6 @@
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.PriorityQueue;
+import java.util.*;
 
 public class Application {
     public static void main(String[] args) throws IOException {
@@ -11,8 +8,8 @@ public class Application {
         String filename = "D:\\HAW-Hamburg\\AD\\Praktikum04\\src\\main\\resources\\textdoc.txt";
         byte[] characters = reader.channelRead(filename);
         Huffman huffman = new Huffman();
-        huffman.calculateCharacterFrequencies(characters);
-        huffman.createHeap();
+        HashMap<Byte, Integer> frequencyTable = huffman.calculateCharacterFrequencies(characters);
+        huffman.createHeap(frequencyTable);
         BinaryTree binaryTree = huffman.buildHuffmanTree();
         var outputCode = huffman.calculateCodeFromHuffmanTree(binaryTree, characters);
 //        ByteWritter byteWritter = new ByteWritter();

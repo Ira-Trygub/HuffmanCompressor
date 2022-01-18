@@ -3,11 +3,12 @@ import java.util.*;
 public class Huffman {
     static int charsCount;
     PriorityQueue<HuffNode> heap;
-    HashMap<Byte, Integer> frequencyTable = new HashMap<>();
+
 //    BinaryTree binaryTree;
 
 
-    void calculateCharacterFrequencies(byte[] arrByte) {
+    HashMap<Byte, Integer> calculateCharacterFrequencies(byte[] arrByte) {
+        HashMap<Byte, Integer> frequencyTable = new HashMap<>();
         charsCount = arrByte.length;
         for (int i = 0; i < arrByte.length; i++) {
             if (frequencyTable.keySet().contains(arrByte[i])) {
@@ -17,10 +18,11 @@ public class Huffman {
                 frequencyTable.put(arrByte[i], 1);
             }
         }
+        return frequencyTable;
     }
 
 
-    void createHeap() {
+    void createHeap(HashMap<Byte, Integer> frequencyTable) {
         ArrayList<HuffNode> nodesList = new ArrayList<>();
         for (Map.Entry<Byte, Integer> kv : frequencyTable.entrySet()) {
             nodesList.add(new HuffNode(kv.getKey(), kv.getValue()));
@@ -121,6 +123,4 @@ public class Huffman {
         }
         return decodeArrayList.toArray(new Byte[decodeArrayList.size()]);
     }
-
-
 }
