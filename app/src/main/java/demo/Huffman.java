@@ -1,7 +1,5 @@
 package demo;
-
 import com.github.jinahya.bit.io.*;
-
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
@@ -13,14 +11,17 @@ import java.util.HashMap;
 import java.util.PriorityQueue;
 
 public class Huffman {
-    static HashMap<Byte, Integer> calculateCharacterFrequencies(ByteReader reader) throws IOException {
+    int counter = 0;
+     HashMap<Byte, Integer> calculateCharacterFrequencies(ByteReader reader) throws IOException {
+
         var frequencyTable = new HashMap<Byte, Integer>();
-        reader.readFile(i -> {
+                reader.readFile(i -> {
             byte c = (byte) i;
-            frequencyTable.compute(
+            frequencyTable.compute( // put or ubdate k, v in hashmap
                     c,
                     (k, v) -> (v == null) ? 1 : v + 1
             );
+            counter++;
         });
         return frequencyTable;
     }
@@ -79,6 +80,7 @@ public class Huffman {
                 throw new RuntimeException(e);
             }
         });
+        bitOut.align(1);
         bitOut.flush();
     }
 
@@ -92,7 +94,7 @@ public class Huffman {
         Collections.reverse(acc);
         acc.forEach(b -> {
             try {
-                bitOut.writeBoolean(b);
+                bitOut.writeBoolean(b); //write code to file
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -100,7 +102,8 @@ public class Huffman {
     }
 
     public static void decode(BinaryTree<HuffNode> root, Path path) throws IOException {
-        try (var decoded = new FileOutputStream("textdoc.txt")) {
+       try (var decoded = new FileOutputStream("readme2.md")) {
+//        try (var decoded = new FileOutputStream("figuren2.json")) {
             var byteInput = BufferByteInput.adapting(() -> {
                 try {
                     return FileChannel.open(path, StandardOpenOption.READ);

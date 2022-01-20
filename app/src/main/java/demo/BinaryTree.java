@@ -10,7 +10,6 @@ public class BinaryTree<A> {
 
     public BinaryTree(A node) {
         this.node = node;
-        this.bit = true;
     }
 
     public BinaryTree(A node, BinaryTree<A> left, BinaryTree<A> right) {

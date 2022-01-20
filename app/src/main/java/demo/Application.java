@@ -7,8 +7,11 @@ import java.util.HashMap;
 
 public class Application {
     public static void main(String[] args) throws IOException {
-        ByteReader reader = new ByteReaderImpl("app/src/main/resources/textdoc.txt");
-        HashMap<Byte, Integer> frequencyTable = Huffman.calculateCharacterFrequencies(reader);
+        Huffman huffman = new Huffman();
+        ByteReader reader = new ByteReaderImpl("app/src/main/resources/readme.md");
+//        ByteReader reader = new ByteReaderImpl("app/src/main/resources/textdoc.txt");
+//        ByteReader reader = new ByteReaderImpl("app/src/main/resources/figuren.json");
+        HashMap<Byte, Integer> frequencyTable = huffman.calculateCharacterFrequencies(reader);
         var heap = Huffman.createHeap(frequencyTable);
 
         var map = new HashMap<Byte, BinaryTree<HuffNode>>();
