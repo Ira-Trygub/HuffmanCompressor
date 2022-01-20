@@ -6,7 +6,7 @@ import java.nio.file.Path;
 import java.util.HashMap;
 
 public class Application {
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, ClassNotFoundException {
         var huffman = new Huffman();
         ByteReader reader = new ByteReaderImpl("app/src/main/resources/readme.md");
         // ByteReader reader = new ByteReaderImpl("app/src/main/resources/figuren.json");
@@ -18,8 +18,8 @@ public class Application {
 
         Path arch = Files.createTempFile("arch", ".huf");
         System.out.println(arch.getFileName());
-        huffman.calculateCodeFromHuffmanTree(map, reader, arch);
+        huffman.calculateCodeFromHuffmanTree(binaryTree, map, reader, arch);
 
-        huffman.decode(binaryTree, arch);
+        huffman.decode(arch);
     }
 }

@@ -1,10 +1,12 @@
 package demo;
 
-public class BinaryTree<A> {
+import java.io.Serializable;
+
+public class BinaryTree<A extends Serializable> implements Serializable {
     private final A node;
     private boolean bit;
 
-    private BinaryTree<A> parent;
+    private transient BinaryTree<A> parent;
     private BinaryTree<A> left;
     private BinaryTree<A> right;
 

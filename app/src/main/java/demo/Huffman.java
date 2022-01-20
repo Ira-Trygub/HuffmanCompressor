@@ -2,15 +2,12 @@ package demo;
 
 import com.github.jinahya.bit.io.*;
 
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.PriorityQueue;
+import java.util.*;
+import java.util.stream.Stream;
 
 public class Huffman {
     private long counter = 0;
@@ -64,7 +61,7 @@ public class Huffman {
         return root;
     }
 
-    public void calculateCodeFromHuffmanTree(HashMap<Byte, BinaryTree<HuffNode>> map, ByteReader reader, Path path) throws IOException {
+    public void calculateCodeFromHuffmanTree(BinaryTree<HuffNode> binaryTree, HashMap<Byte, BinaryTree<HuffNode>> map, ByteReader reader, Path path) throws IOException {
         var byteOutput = BufferByteOutput.adapting(() -> {
             try {
                 return FileChannel.open(path, StandardOpenOption.WRITE);
@@ -74,8 +71,20 @@ public class Huffman {
         });
 
         var bitOut = BitOutputAdapter.from(byteOutput);
-        bitOut.writeLong64(counter);
 
+        try (var bos = new ByteArrayOutputStream()) {
+            try (var oos = new ObjectOutputStream(new BufferedOutputStream(bos))) {
+                oos.writeObject(binaryTree);
+                oos.flush();
+            }
+            var bytes = bos.toByteArray();
+            bitOut.writeInt32(bytes.length);
+            for (byte c : bytes) {
+                bitOut.writeByte8(c);
+            }
+        }
+
+        bitOut.writeLong64(counter);
         reader.readFile(c -> {
             try {
                 calculateCodeR(map, (byte) c, bitOut);
@@ -104,7 +113,7 @@ public class Huffman {
         });
     }
 
-    public void decode(BinaryTree<HuffNode> root, Path path) throws IOException {
+    public void decode(Path path) throws IOException, ClassNotFoundException {
         try (var decoded = new FileOutputStream("readme.md")) {
             // try (var decoded = new FileOutputStream("figuren2.json")) {
             var byteInput = BufferByteInput.adapting(() -> {
@@ -115,6 +124,15 @@ public class Huffman {
                 }
             });
             var biteIn = BitInputAdapter.from(byteInput);
+            var treeLength = biteIn.readInt32();
+            byte[] ar = new byte[(int) treeLength];
+            for (int i = 0; i < treeLength; i++) {
+                ar[i] = biteIn.readByte8();
+            }
+            var bis = new ByteArrayInputStream(ar);
+            var in = new ObjectInputStream(bis);
+            var root = (BinaryTree<HuffNode>) in.readObject();
+
             var c = biteIn.readLong64();
             var node = root;
             while (c > 0) {

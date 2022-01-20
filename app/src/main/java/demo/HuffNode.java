@@ -1,6 +1,8 @@
 package demo;
 
-public class HuffNode implements Comparable<HuffNode> {
+import java.io.Serializable;
+
+public class HuffNode implements Comparable<HuffNode>, Serializable {
     private final int character;
     private final int frequency;
 
