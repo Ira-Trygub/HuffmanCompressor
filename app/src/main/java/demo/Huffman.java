@@ -7,7 +7,6 @@ import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.*;
-import java.util.stream.Stream;
 
 public class Huffman {
     private long counter = 0;
@@ -61,39 +60,53 @@ public class Huffman {
         return root;
     }
 
-    public void calculateCodeFromHuffmanTree(BinaryTree<HuffNode> binaryTree, HashMap<Byte, BinaryTree<HuffNode>> map, ByteReader reader, Path path) throws IOException {
-        var byteOutput = BufferByteOutput.adapting(() -> {
-            try {
-                return FileChannel.open(path, StandardOpenOption.WRITE);
-            } catch (IOException er) {
-                throw new RuntimeException("failed to open " + path, er);
-            }
-        });
+    public void calculateCodeFromHuffmanTree(BinaryTree<HuffNode> tree, HashMap<Byte, BinaryTree<HuffNode>> nodes, ByteReader in, Path outPath) throws IOException {
+        var out = openBitFileForWrite(outPath);
+        serializeTree(tree, out);
+        writeCompressedBitStream(in, nodes, out);
+    }
 
-        var bitOut = BitOutputAdapter.from(byteOutput);
-
-        try (var bos = new ByteArrayOutputStream()) {
-            try (var oos = new ObjectOutputStream(new BufferedOutputStream(bos))) {
-                oos.writeObject(binaryTree);
-                oos.flush();
-            }
-            var bytes = bos.toByteArray();
-            bitOut.writeInt32(bytes.length);
-            for (byte c : bytes) {
-                bitOut.writeByte8(c);
-            }
-        }
-
+    private void writeCompressedBitStream(ByteReader in, HashMap<Byte, BinaryTree<HuffNode>> map, BitOutput bitOut) throws IOException {
         bitOut.writeLong64(counter);
-        reader.readFile(c -> {
+
+        in.readFile(c -> {
             try {
                 calculateCodeR(map, (byte) c, bitOut);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         });
+
         bitOut.align(1);
         bitOut.flush();
+    }
+
+    private BitOutput openBitFileForWrite(Path outPath) {
+        var byteOutput = BufferByteOutput.adapting(() -> {
+            try {
+                return FileChannel.open(outPath, StandardOpenOption.WRITE);
+            } catch (IOException er) {
+                throw new RuntimeException("failed to open " + outPath, er);
+            }
+        });
+        var bitOutput = BitOutputAdapter.from(byteOutput);
+        return bitOutput;
+    }
+
+    private void serializeTree(BinaryTree<HuffNode> tree, BitOutput out) throws IOException {
+        try (var bos = new ByteArrayOutputStream()) {
+            try (var oos = new ObjectOutputStream(new BufferedOutputStream(bos))) {
+                oos.writeObject(tree);
+                oos.flush();
+            }
+            var bytes = bos.toByteArray();
+
+            out.writeInt32(bytes.length);
+
+            for (byte c : bytes) {
+                out.writeByte8(c);
+            }
+        }
     }
 
     public void calculateCodeR(HashMap<Byte, BinaryTree<HuffNode>> map, byte c, BitOutput bitOut) throws IOException {
