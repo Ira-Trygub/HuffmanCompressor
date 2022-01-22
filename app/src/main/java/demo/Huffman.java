@@ -6,68 +6,59 @@ import java.io.*;
 import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.PriorityQueue;
 
 public class Huffman {
-    private long counter = 0;
-
-    public HashMap<Byte, Integer> calculateCharacterFrequencies(ByteReader reader) throws IOException {
-        var frequencyTable = new HashMap<Byte, Integer>();
+    public static long calculateCharacterFrequencies(ByteReader reader, HashMap<Byte, Integer> resTable) throws IOException {
+        long[] counter = new long[1]; // java sucks, scala rulez
         reader.readFile(i -> {
             byte c = (byte) i;
-            frequencyTable.compute( // put or ubdate k, v in hashmap
+            resTable.compute( // put or update k, v in hashmap
                     c,
                     (k, v) -> (v == null) ? 1 : v + 1
             );
-            counter++;
+            counter[0]++;
         });
-        return frequencyTable;
+        return counter[0];
     }
 
-
-    public PriorityQueue<HuffNode> createHeap(HashMap<Byte, Integer> frequencyTable) {
-        var res = new PriorityQueue<HuffNode>();
-        frequencyTable.forEach((k, v) ->
-                res.add(new HuffNode(k, v))
-        );
+    public static PriorityQueue<BinaryTree<Node>> createHeap(HashMap<Byte, Integer> frequencyTable, HashMap<Byte, BinaryTree<Node>> resMap) {
+        var res = new PriorityQueue<BinaryTree<Node>>();
+        frequencyTable.forEach((k, v) -> {
+            BinaryTree<Node> leaf = new BinaryTree<>(new Node(k, v));
+            res.add(leaf);
+            resMap.put(k, leaf);
+        });
         return res;
     }
 
-    public BinaryTree<HuffNode> buildHuffmanTree(HashMap<Byte, BinaryTree<HuffNode>> map, PriorityQueue<HuffNode> heap) {
-        var root = new BinaryTree<HuffNode>(heap.poll());
-        map.put((byte) root.getNode().getCharacter(), root);
-
-        while (!heap.isEmpty()) {
-            var leaf = new BinaryTree<HuffNode>(heap.poll());
-            map.put((byte) leaf.getNode().getCharacter(), leaf);
-
-            var freq = root.getNode().getFrequency() + leaf.getNode().getFrequency();
-            BinaryTree<HuffNode> sum;
-            if (leaf.getNode().getFrequency() < freq) {
-                sum = new BinaryTree<HuffNode>(new HuffNode(-1, freq), leaf, root);
-                leaf.setBit(false);
-                root.setBit(true);
+    public static BinaryTree<Node> buildHuffmanTree(PriorityQueue<BinaryTree<Node>> heap) {
+        while (true) {
+            var min1 = heap.poll();
+            var min2 = heap.poll();
+            if (min2 != null) {
+                var freq = min1.getNode().getFrequency() + min2.getNode().getFrequency();
+                var sum = new BinaryTree<>(new Node(-1, freq), min1, min2);
+                min1.setParent(sum);
+                min2.setParent(sum);
+                heap.add(sum);
             } else {
-                sum = new BinaryTree<HuffNode>(new HuffNode(-1, freq), root, leaf);
-                leaf.setBit(true);
-                root.setBit(false);
+                return min1;
             }
-            leaf.setParent(sum);
-            root.setParent(sum);
-            root = sum;
         }
-
-        return root;
     }
 
-    public void calculateCodeFromHuffmanTree(BinaryTree<HuffNode> tree, HashMap<Byte, BinaryTree<HuffNode>> nodes, ByteReader in, Path outPath) throws IOException {
+    public static void calculateCodeFromHuffmanTree(long fileLength, BinaryTree<Node> tree, HashMap<Byte, BinaryTree<Node>> nodes, ByteReader in, Path outPath) throws IOException {
         var out = openBitFileForWrite(outPath);
         serializeTree(tree, out);
-        writeCompressedBitStream(in, nodes, out);
+        writeCompressedBitStream(fileLength, in, nodes, out);
     }
 
-    private void writeCompressedBitStream(ByteReader in, HashMap<Byte, BinaryTree<HuffNode>> map, BitOutput bitOut) throws IOException {
-        bitOut.writeLong64(counter);
+    private static void writeCompressedBitStream(long fileLength, ByteReader in, HashMap<Byte, BinaryTree<Node>> map, BitOutput bitOut) throws IOException {
+        bitOut.writeLong64(fileLength);
 
         in.readFile(c -> {
             try {
@@ -81,7 +72,7 @@ public class Huffman {
         bitOut.flush();
     }
 
-    private BitOutput openBitFileForWrite(Path outPath) {
+    private static BitOutput openBitFileForWrite(Path outPath) {
         var byteOutput = BufferByteOutput.adapting(() -> {
             try {
                 return FileChannel.open(outPath, StandardOpenOption.WRITE);
@@ -93,7 +84,7 @@ public class Huffman {
         return bitOutput;
     }
 
-    private void serializeTree(BinaryTree<HuffNode> tree, BitOutput out) throws IOException {
+    private static void serializeTree(BinaryTree<Node> tree, BitOutput out) throws IOException {
         try (var bos = new ByteArrayOutputStream()) {
             try (var oos = new ObjectOutputStream(new BufferedOutputStream(bos))) {
                 oos.writeObject(tree);
@@ -109,7 +100,7 @@ public class Huffman {
         }
     }
 
-    public void calculateCodeR(HashMap<Byte, BinaryTree<HuffNode>> map, byte c, BitOutput bitOut) throws IOException {
+    public static void calculateCodeR(HashMap<Byte, BinaryTree<Node>> map, byte c, BitOutput bitOut) throws IOException {
         var acc = new ArrayList<Boolean>();
         var node = map.get(c);
         while (!node.isRoot()) {
@@ -126,7 +117,7 @@ public class Huffman {
         });
     }
 
-    public void decode(Path path) throws IOException, ClassNotFoundException {
+    public static void decode(Path path) throws IOException, ClassNotFoundException {
         try (var decoded = new FileOutputStream("readme.md")) {
             // try (var decoded = new FileOutputStream("figuren2.json")) {
             var byteInput = BufferByteInput.adapting(() -> {
@@ -144,7 +135,7 @@ public class Huffman {
             }
             var bis = new ByteArrayInputStream(ar);
             var in = new ObjectInputStream(bis);
-            var root = (BinaryTree<HuffNode>) in.readObject();
+            var root = (BinaryTree<Node>) in.readObject();
 
             var c = biteIn.readLong64();
             var node = root;

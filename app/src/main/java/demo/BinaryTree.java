@@ -2,22 +2,24 @@ package demo;
 
 import java.io.Serializable;
 
-public class BinaryTree<A extends Serializable> implements Serializable {
+public class BinaryTree<A extends Serializable & Comparable<A>> implements Serializable, Comparable<BinaryTree<A>> {
     private final A node;
     private boolean bit;
 
     private transient BinaryTree<A> parent;
-    private BinaryTree<A> left;
-    private BinaryTree<A> right;
+    private BinaryTree<A> min1;
+    private BinaryTree<A> min2;
 
     public BinaryTree(A node) {
         this.node = node;
     }
 
-    public BinaryTree(A node, BinaryTree<A> left, BinaryTree<A> right) {
+    public BinaryTree(A node, BinaryTree<A> min1, BinaryTree<A> min2) {
         this.node = node;
-        this.left = left;
-        this.right = right;
+        this.min1 = min1;
+        this.min2 = min2;
+        min1.setBit(false);
+        min2.setBit(true);
     }
 
     public A getNode() {
@@ -45,10 +47,15 @@ public class BinaryTree<A extends Serializable> implements Serializable {
     }
 
     public boolean isLeaf() {
-        return left == null;
+        return min1 == null;
     }
 
     public BinaryTree<A> nextNode(boolean bit) {
-        return bit ? right : left;
+        return bit ? min2 : min1;
+    }
+
+    @Override
+    public int compareTo(BinaryTree<A> o) {
+        return node.compareTo(o.node);
     }
 }
